@@ -4,6 +4,7 @@
         "contourf",
         "dtype",
         "hstack",
+        "myfile",
         "proba",
         "pyplot",
         "sklearn",

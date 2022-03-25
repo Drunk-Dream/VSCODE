@@ -9,7 +9,7 @@ datanames1 = []
 BackupDirectory = open(os.path.join(path, "BackupDirectory.txt"), "w")
 
 for i in datanames:
-    if os.path.splitext(i)[1] == '.flv':
+    if os.path.splitext(i)[1] == '.flv' and i[:2] == '录制':
         datanames1.append(i)
         ii = i.split("-")
         if i[0] == 't':
