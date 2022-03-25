@@ -1,0 +1,6 @@
+pic/
+.history/
+common.code-workspace
+*.exe
+build/
+*.spec
