@@ -4,3 +4,5 @@ common.code-workspace
 *.exe
 build/
 *.spec
+Markdown/*.html
+Arduino/.vscode/arduino.json
