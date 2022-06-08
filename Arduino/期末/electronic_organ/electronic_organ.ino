@@ -31,6 +31,9 @@ int C[] = {0, 262, 294, 330, 350, 393, 441, 494};
 //定义引脚
 int tonePin = 10; //蜂鸣器引脚
 int recvPin = 11; //红外引脚
+const int redPin=12;
+const int greenPin=13;
+const int bluePin=1;
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); //实例化lcd
 IRrecv irrecv(recvPin);             //实例化红外
@@ -59,6 +62,12 @@ void newtone(byte tonePin, int frequency, int duration)
         digitalWrite(tonePin, LOW);
         delayMicroseconds(pulse);
     }
+}
+//设置调节RGB的函数
+void setColourRgb(unsigned int red, unsigned int green, unsigned int blue) {
+ analogWrite(redPin, red);
+ analogWrite(greenPin, green);
+ analogWrite(bluePin, blue);
 }
 
 /*
@@ -229,6 +238,10 @@ void PlayMusic()
             break;
         }
         int i = 0;
+        unsigned int rgbColour[3];
+        rgbColour[0] = 255;
+        rgbColour[1] = 0;
+        rgbColour[2] = 0;  
         while (i < tuneLength) //进入播放的循环
         {
             if (irrecv.decode()) //随时可以接收红外信号进入其他两个模式，
@@ -245,6 +258,10 @@ void PlayMusic()
                 irrecv.resume();
             }
             newtone(tonePin, tune[i], durt);
+            rgbColour[0] = 255-0.5*tune[i];
+            rgbColour[1] = 0.5*tune[i];
+            rgbColour[2] = tune[i]-255;
+            setColourRgb(rgbColour[0], rgbColour[1], rgbColour[2]);
             // delay(durt);
             i++;
         }
