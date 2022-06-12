@@ -31,9 +31,9 @@ int C[] = {0, 262, 294, 330, 350, 393, 441, 494};
 //定义引脚
 int tonePin = 10; //蜂鸣器引脚
 int recvPin = 11; //红外引脚
-const int redPin=12;
-const int greenPin=13;
-const int bluePin=1;
+const int redPin = 12;
+const int greenPin = 13;
+const int bluePin = 9;
 
 LiquidCrystal_I2C lcd(0x27, 16, 2); //实例化lcd
 IRrecv irrecv(recvPin);             //实例化红外
@@ -62,12 +62,14 @@ void newtone(byte tonePin, int frequency, int duration)
         digitalWrite(tonePin, LOW);
         delayMicroseconds(pulse);
     }
+    delay(duration);
 }
 //设置调节RGB的函数
-void setColourRgb(unsigned int red, unsigned int green, unsigned int blue) {
- analogWrite(redPin, red);
- analogWrite(greenPin, green);
- analogWrite(bluePin, blue);
+void setColourRgb(unsigned int red, unsigned int green, unsigned int blue)
+{
+    analogWrite(redPin, red);
+    analogWrite(greenPin, green);
+    analogWrite(bluePin, blue);
 }
 
 /*
@@ -80,20 +82,21 @@ void setColourRgb(unsigned int red, unsigned int green, unsigned int blue) {
 //电子琴实时演绎的函数
 inline void KeyboardRealTimeDeduction()
 {
+    int duration = 100;
     if (digitalRead(2))
-        newtone(tonePin, C[1], 100);
+        newtone(tonePin, C[1], duration);
     if (digitalRead(3))
-        newtone(tonePin, C[2], 100);
+        newtone(tonePin, C[2], duration);
     if (digitalRead(4))
-        newtone(tonePin, C[3], 100);
+        newtone(tonePin, C[3], duration);
     if (digitalRead(5))
-        newtone(tonePin, C[4], 100);
+        newtone(tonePin, C[4], duration);
     if (digitalRead(6))
-        newtone(tonePin, C[5], 100);
+        newtone(tonePin, C[5], duration);
     if (digitalRead(7))
-        newtone(tonePin, C[6], 100);
+        newtone(tonePin, C[6], duration);
     if (digitalRead(8))
-        newtone(tonePin, C[7], 100);
+        newtone(tonePin, C[7], duration);
 }
 
 /*
@@ -199,12 +202,12 @@ void RecordingTune()
             {
                 state = decodingResults; //将状态设为接收到的信号
                 tuneLength = i_tune;     //录制的长度就等于索引的长度
-                irrecv.resume();         //这个是用来等待下一次接收红外信号用的
-                break;                   //跳出while循环，这时候这个函数也会结束
+                i_tune = 0;
+                irrecv.resume(); //这个是用来等待下一次接收红外信号用的
+                break;           //跳出while循环，这时候这个函数也会结束
             }
             irrecv.resume(); //每次接收完信号，不管要不要进一步出来都要这个函数来等待下一次接收红外信号
         }
-        KeyboardRealTimeDeduction();                        //解释：即时演绎的函数，用来实现录制时也能实时发出声音，还没测试过
         buttonState = KeyState();                           //解释：接收按键状态，0或者对应按下的引脚-1（即所对应的音调的索引）这里在此强调千万不要直接该引脚，不然这里会出错
         if ((buttonState != 0) && (beforeButtonState == 0)) //如果按键按下且上一次已经松开
         {
@@ -214,6 +217,7 @@ void RecordingTune()
         if (buttonState != beforeButtonState) //消抖
             delay(20);
         beforeButtonState = buttonState;
+        KeyboardRealTimeDeduction(); //解释：即时演绎的函数，用来实现录制时也能实时发出声音，还没测试过
         delay(100);
     }
 }
@@ -226,7 +230,7 @@ void RecordingTune()
 // 播放录制好的曲子
 void PlayMusic()
 {
-    int durt = 500; //这个是节奏，即响500ms后期可调
+    int durt = 150; //这个是节奏，即响500ms后期可调
     while (1)
     {
         if (tuneLength == 0) //如果数组长度等于0，则不会播放音乐并返回模式1
@@ -241,7 +245,7 @@ void PlayMusic()
         unsigned int rgbColour[3];
         rgbColour[0] = 255;
         rgbColour[1] = 0;
-        rgbColour[2] = 0;  
+        rgbColour[2] = 0;
         while (i < tuneLength) //进入播放的循环
         {
             if (irrecv.decode()) //随时可以接收红外信号进入其他两个模式，
@@ -252,17 +256,18 @@ void PlayMusic()
                 {
                     state = decodingResults;
                     playFlag = 1; //将标记置为1
+                    setColourRgb(0, 0, 0);
                     irrecv.resume();
                     break; //退出第2层循环
                 }
                 irrecv.resume();
             }
             newtone(tonePin, tune[i], durt);
-            rgbColour[0] = 255-0.5*tune[i];
-            rgbColour[1] = 0.5*tune[i];
-            rgbColour[2] = tune[i]-255;
+            rgbColour[0] = 255 - 0.5 * tune[i];
+            rgbColour[1] = 0.5 * tune[i];
+            rgbColour[2] = tune[i] - 255;
             setColourRgb(rgbColour[0], rgbColour[1], rgbColour[2]);
-            // delay(durt);
+            delay(durt);
             i++;
         }
         if (playFlag == 1)
@@ -342,5 +347,4 @@ void loop()
         beforeState = state;
         PlayMusic(); //调用模式3的函数
     }
-    delay(300);
 }
