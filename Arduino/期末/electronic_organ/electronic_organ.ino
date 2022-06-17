@@ -11,6 +11,7 @@ KeyboardRealTimeDeduction完成，该函数以及对应的功能还未完成测�
 */
 #include <LiquidCrystal_I2C.h> //LCD模块
 #include <IRremote.h>          //红外模块
+#include <EEPROM.h>            //引入EEPROM库
 
 /*
 解释：
@@ -29,8 +30,8 @@ KeyboardRealTimeDeduction完成，该函数以及对应的功能还未完成测�
 int C[] = {0, 262, 294, 330, 350, 393, 441, 494};
 
 //定义引脚
-int tonePin = 10; //蜂鸣器引脚
-int recvPin = 11; //红外引脚
+const int tonePin = 10; //蜂鸣器引脚
+const int recvPin = 11; //红外引脚
 const int redPin = 12;
 const int greenPin = 13;
 const int bluePin = 9;
@@ -42,12 +43,18 @@ IRrecv irrecv(recvPin);             //实例化红外
 //定义变量
 char state = '1';          //这个变量用来存储当前状态，默认为状态1，即开头所述的模式1
 char beforeState = '0';    //这个变量用来存储上一次的变量，初始化为0没有意义，主要是为了防止在每次循环中都重新刷新LCD,不用理会
-int tune[200];             //这个数组是用来存储录制的音
+int tune[100];             //这个数组是用来存储录制的音
 int buttonState = 0;       //这个变量用来在录制时存储按键状态，当没有按键按下时为0，有任意按键按下时为1
 int beforeButtonState = 0; //这个按键是用来存储上一次循环时的按键状态，与上一个变量结合一次使用可以用来做判断按键是否松开，只有松开上一次按键才能按下一次
 int i_tune = 0;            //曲调数组索引，即录制时做tune这个数组的索引，不用理会
 int tuneLength = 0;        //曲调长度，用来记录这个数组最终记录的长度
 int playFlag = 0;          //播放时终止标志，用来标记以便跳出模式3的两重循环
+
+union int_value
+{
+    int i;
+    byte b[2];
+};
 
 //因为系统的tone函数与红外模块有冲突，所以改用新的函数newtone来实现原来tone的功能
 //新的tone
@@ -190,8 +197,9 @@ int KeyState()
 //录制曲调
 void RecordingTune()
 {
-    for (int i = 0; i < 200; i++) //首先将tune这个数组全部元素置零
+    for (int i = 0; i < 100; i++) //首先将tune这个数组全部元素置零
         tune[i] = 0;
+    int_value unTune;
     while (1) //然后进入录制循环
     {
         //先判断是否接收到红外信号
@@ -203,6 +211,17 @@ void RecordingTune()
                 state = decodingResults; //将状态设为接收到的信号
                 tuneLength = i_tune;     //录制的长度就等于索引的长度
                 i_tune = 0;
+                //存储乐谱
+                for (int i = 0; i < 100; i++)
+                {
+                    unTune.i = tune[i];
+                    EEPROM.write(2 * i, unTune.b[0]);
+                    EEPROM.write(2 * i + 1, unTune.b[1]);
+                }
+                unTune.i = tuneLength;
+                EEPROM.write(500, unTune.b[0]);
+                EEPROM.write(501, unTune.b[1]);
+                EEPROM.end();
                 irrecv.resume(); //这个是用来等待下一次接收红外信号用的
                 break;           //跳出while循环，这时候这个函数也会结束
             }
@@ -230,6 +249,17 @@ void RecordingTune()
 // 播放录制好的曲子
 void PlayMusic()
 {
+    int_value unTune;
+    //读入乐谱
+    for (int i = 0; i < 100; i++)
+    {
+        unTune.b[0] = EEPROM.read(2 * i);
+        unTune.b[1] = EEPROM.read(2 * i + 1);
+        tune[i] = unTune.i;
+    }
+    unTune.b[0] = EEPROM.read(500);
+    unTune.b[1] = EEPROM.read(501);
+    tuneLength = unTune.i;
     int durt = 150; //这个是节奏，即响500ms后期可调
     while (1)
     {
@@ -320,7 +350,7 @@ void loop()
         {
             lcd.clear(); //刷新LCD
             lcd.setCursor(0, 0);
-            lcd.print("RENDITION");
+            lcd.print("REALTIME");
         }
         KeyboardRealTimeDeduction();
         beforeState = state;

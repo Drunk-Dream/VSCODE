@@ -6,10 +6,15 @@
     "explorer.confirmDelete": false,
     "editor.detectIndentation": false,
     "cSpell.words": [
+        "durt",
+        "EEPROM",
+        "irrecv",
         "MFRC",
         "myservo",
+        "newtone",
         "nuid",
         "PICC",
-        "rfid"
+        "rfid",
+        "tonepin"
     ],
 }
