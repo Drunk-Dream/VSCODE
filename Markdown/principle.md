@@ -236,7 +236,8 @@ D-->>A: Dashed open arrow
 
 甘特图内在思想简单。基本是一条线条图，横轴表示时间，纵轴表示活动（项目），线条表示在整个期间上计划和实际的活动完成情况。它直观地表明任务计划在什么时候进行，及实际进展与计划要求的对比。
 
-```gantt
+``` mermaid
+gantt
     title 项目开发流程
     section 项目确定
         需求分析       :a1, 2016-06-22, 3d
@@ -256,7 +257,8 @@ D-->>A: Dashed open arrow
 
 ### 10. Mermaid 流程图
 
-```graphLR
+``` mermaid
+graph LR
     A[Hard edge] -->|Link text| B(Round edge)
     B --> C{Decision}
     C -->|One| D[Result one]
