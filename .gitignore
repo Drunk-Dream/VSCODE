@@ -6,3 +6,4 @@ build/
 *.spec
 Markdown/**/*.html
 Arduino/.vscode/arduino.json
+__pycache__/
